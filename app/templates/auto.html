@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Auto-resolved{% endblock %}{% block body %}
+<h1>Auto-resolved attacks</h1>
+<p class="muted">Confidence ≥ τ: resolved without a person, with the SHAP explanation archived for audit (paper stage 4). Open any row to review it anyway.</p>
+<div class="tablewrap"><table><tr><th>#</th><th>time</th><th>BSSID</th><th>class</th><th class="num">confidence</th><th>top SHAP evidence</th></tr>
+{% for r in rows %}<tr><td><a href="/alert/{{ r.id }}">{{ r.id }}</a></td><td>{{ r.ts }}</td><td class="mono">{{ r.bssid }}</td><td>{{ r.pred }}</td>
+<td class="num">{{ "%.2f"|format(r.confidence) }}</td><td class="muted">{{ r.top or "" }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">Nothing auto-resolved yet.</td></tr>{% endfor %}</table></div>{% endblock %}
