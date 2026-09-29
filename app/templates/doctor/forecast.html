@@ -1,0 +1,16 @@
+{% extends "doctor/base.html" %}{% block title %}Forecast{% endblock %}{% block crumb %}FORECAST{% endblock %}{% block body %}
+<div class="marquee"><span>⚠ PREDICTIVE ALERT SYSTEM ACTIVE / TREND OF ATTACK SHARE PER {{ f.block or 25 }} WINDOWS / THRESHOLD {{ '%.0f'|format((f.threshold or 0.2)*100) }}% / ⚠ PREDICTIVE ALERT SYSTEM ACTIVE / TREND OF ATTACK SHARE PER {{ f.block or 25 }} WINDOWS / THRESHOLD {{ '%.0f'|format((f.threshold or 0.2)*100) }}% /&nbsp;</span></div>
+<div class="eyebrow" style="margin-top:22px"><span class="moderate">✦</span> Forecast</div><h1>Prediction alert</h1>
+{% if not f.ready %}<div class="box">Need at least {{ f.need }} scored windows for a trend (have {{ f.have }}). Run the <a href="/doctor/diag?run=1">diagnostic</a> a few times.</div>
+{% else %}{% set c = {'rising':'moderate','high':'bad','stable':'good'}[f.status] %}
+<div class="box"><svg width="70" height="62" viewBox="0 0 24 22"><path d="M12 1l11 20H1z" fill="var(--{{ 'mod' if c=='moderate' else ('bad' if c=='bad' else 'good') }})"/><path d="M12 8v6M12 17v.5" stroke="var(--bg)" stroke-width="2.4" stroke-linecap="round"/></svg>
+<h2 style="font-family:var(--head);font-size:30px;letter-spacing:-.5px;margin:14px 0">{{ f.headline }}</h2>
+<p class="muted">Attack share is {{ '%.0f'|format(f.current*100) }}% now and {{ 'rising' if f.slope > 0 else 'falling' if f.slope < 0 else 'flat' }} ({{ '%+.1f'|format(f.slope*100) }} points per block){% if f.top_class %}; most recent activity: {{ f.top_class }} on {{ f.top_bssid }}{% endif %}.</p></div>
+<div class="box"><div class="eyebrow">Time until</div><div style="font-family:var(--head);font-size:96px;line-height:1" class="{{ c }}">{% if f.status == 'high' %}NOW{% elif f.minutes is not none %}{{ f.minutes|round|int }}{% else %}–{% endif %}</div><div class="unit">{{ 'ALREADY ABOVE THRESHOLD' if f.status == 'high' else 'MINUTES OF TRAFFIC' }}</div>
+<div class="eyebrow" style="margin-top:18px">Confidence (trend fit R²)</div><div class="big">{{ '%.0f'|format(f.confidence*100) }}%</div></div>
+<div class="box"><div class="eyebrow">Attack share per block</div>
+{% set n = f.series|length %}<svg viewBox="0 0 300 120" style="width:100%;display:block;margin-top:10px">
+<line x1="0" x2="300" y1="{{ 110 - f.threshold*100 }}" y2="{{ 110 - f.threshold*100 }}" stroke="var(--bad)" stroke-dasharray="4 4"/>
+{% for v in f.series %}<rect x="{{ loop.index0*300/n + 4 }}" y="{{ 110 - v*100 }}" width="{{ 300/n - 8 }}" height="{{ [v*100,1]|max }}" fill="var(--ink)"/>{% endfor %}</svg>
+<p class="mono muted" style="font-size:12px">dashed line = {{ '%.0f'|format(f.threshold*100) }}% alert threshold · linear least-squares trend over the last {{ n }} blocks</p></div>{% endif %}
+{% endblock %}
