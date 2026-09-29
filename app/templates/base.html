@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}XWIDS{% endblock %} · Explainable Wireless IDS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+{% if user %}<header><span class="brand">XWIDS · ABEC</span>
+<nav><a href="/">Overview</a><a href="/queue">Analyst queue</a><a href="/auto">Auto-resolved</a>
+<a href="/learning">Feedback loop</a><a href="/audit">Audit log</a><a href="/doctor/"><b>Net Doctor</b></a></nav>
+<span class="me">{{ user }}<form method="post" action="/logout" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+<button class="btn">Log out</button></form></span></header>{% endif %}
+<main>{% with msgs = get_flashed_messages() %}{% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}{% endwith %}
+{% block body %}{% endblock %}</main></body></html>
