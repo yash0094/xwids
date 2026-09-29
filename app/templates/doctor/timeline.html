@@ -1,0 +1,6 @@
+{% extends "doctor/base.html" %}{% block title %}Timeline{% endblock %}{% block crumb %}TIMELINE{% endblock %}{% block body %}
+<h1>Timeline</h1><p class="sub">// Detections, auto-resolutions, analyst verdicts, retraining and fixes.</p>
+<div class="tl">{% for i in items %}<div class="it {{ i.status }}"><div class="box soft"><div class="st"><span class="{{ i.status }}">{{ i.status }}</span> &nbsp; <span class="muted">{{ ago(i.ts) }}</span></div>
+<h2 style="font-size:22px;margin:10px 0 6px">{% if i.link %}<a href="{{ i.link }}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}</h2><div class="muted">{{ i.body }}</div></div></div>
+{% else %}<div class="box">Nothing yet. Run the <a href="/doctor/diag?run=1">diagnostic</a>.</div>{% endfor %}</div>
+{% endblock %}
