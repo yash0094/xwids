@@ -1,0 +1,8 @@
+.venv
+data
+models
+reports
+runtime
+mlruns
+tests
+**/__pycache__
