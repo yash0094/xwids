@@ -1,0 +1,71 @@
+# XWIDS - Explainability-Based Wireless Intrusion Detection System (ABEC framework)
+# Every number below comes from the paper unless marked "(ours)".
+
+seed: 42
+
+paths:
+  raw: data/raw            # put AWID3 CSV files in data/raw/awid3/
+  processed: data/processed
+  models: models
+  reports: reports
+  db: runtime/xwids.sqlite
+
+# ---------- Stage 1: data capture + preprocessing ----------
+features:
+  window_seconds: 1.0      # (ours) frames are grouped per BSS (access point) per 1-second window
+  min_frames: 5            # (ours) windows with fewer frames are dropped
+  attack_fraction: 0.10    # (ours) a window is labelled with an attack if >= 10% of its frames are that attack
+  n_selected: 17           # paper: "SHAP-guided feature selection to retain a 16-17 feature subset"
+  selection_sample: 2000   # rows used to compute mean |SHAP| for selection
+
+split:
+  test: 0.20
+  val: 0.10
+
+smote: true                # paper: SMOTE class balancing (training split only)
+
+datasets:
+  synthetic:
+    source: synthetic
+    n_bss: 10              # simulated access points
+    seconds: 1200          # simulated capture length (20 min)
+  awid3:
+    source: csv
+    glob: "data/raw/awid3/**/*.csv"
+    max_rows_per_file: 400000   # (ours) keeps RAM under ~8 GB; raise on a bigger machine
+    # paper Table 2 classes; windows of other AWID3 classes (SSH, Botnet, ...) are dropped. Delete this line to keep all.
+    keep_classes: [Normal, Deauthentication, (Re)Association Flood, Evil Twin, KRACK]
+  hf:
+    source: hf             # processed features pulled from YOUR Hugging Face dataset repo
+    repo_id: ""            # e.g. "your-username/xwids-awid3-features"  (filled by scripts/07_hf_push.py)
+
+# ---------- Stage 2: multi-model detection engine ----------
+models:
+  rf:  {n_estimators: 500, max_depth: 20}
+  xgb: {n_estimators: 300, learning_rate: 0.05, max_depth: 6}
+  vote_weights: {rf: 0.5, xgb: 0.5}      # soft voting
+  iforest: {contamination: 0.05, n_estimators: 200}
+  cv_folds: 10             # paper: stratified 10-fold CV (scripts/03_evaluate.py --cv)
+
+# ---------- Stage 3 + ABEC ----------
+explain:
+  top_k: 5                 # Sk and Lk are top-5 sets
+  negligible: 0.10         # a feature is "negligible" in a method if |normalised score| < 0.10
+  shap_background: 100
+  lime_samples: 1000
+  fallback_permutations: 24   # only used when the `shap` package is not installed
+
+# ---------- Stage 4: triage ----------
+triage:
+  tau: 0.85                # paper: confidence >= 0.85 -> resolved autonomously
+  zero_day_quantile: 0.995 # (ours) Normal-predicted windows beyond this Isolation Forest quantile are escalated
+  low_agreement: 0.34      # (ours) escalated alerts with Jaccard J below this go to the top of the queue
+
+# ---------- Stage 5: feedback loop ----------
+feedback:
+  retrain_every: 50        # paper: every 50 analyst labels trigger retraining
+  label_weight: 5.0        # (ours) analyst-labelled rows count 5x in retraining
+  mlflow: true             # used only if the mlflow package is installed
+
+deploy:
+  caps: {train: 40000, val: 10000, test: 20000}
