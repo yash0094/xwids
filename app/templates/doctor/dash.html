@@ -1,0 +1,21 @@
+{% extends "doctor/base.html" %}{% block title %}Dashboard{% endblock %}{% block crumb %}DASHBOARD{% endblock %}{% block body %}
+<div class="eyebrow">Network</div><h1>{{ net.name }}</h1><p class="sub">{{ net.sub }}</p>
+<div class="stack"><a class="btn solid" href="/doctor/diag?run=1"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Fix my wifi</a>
+<a class="btn" href="/doctor/diag?run=1">Run full diagnostic →</a>
+<button class="btn" id="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Share report</button></div>
+{% set col = 'var(--good)' if h.label=='GOOD' else ('var(--mod)' if h.label=='MODERATE' else 'var(--bad)') %}
+{% set frac = h.score/100 %}
+<svg viewBox="0 0 300 190" style="width:100%;max-width:520px;display:block;margin:26px auto 0" role="img" aria-label="health {{ h.score }} of 100">
+<path d="M40 160 A110 110 0 0 1 260 160" fill="none" stroke="var(--line)" stroke-width="16"/>
+<path d="M40 160 A110 110 0 0 1 260 160" fill="none" stroke="{{ col }}" stroke-width="16" pathLength="100" stroke-dasharray="{{ h.score }} 100"/>
+<path d="M150 52v16M72 82l11 11M228 82l-11 11M30 162h18M252 162h18" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="150" y="146" text-anchor="middle" style="font-family:var(--head);font-size:64px" fill="{{ col }}">{{ h.score }}</text>
+<text x="150" y="176" text-anchor="middle" fill="var(--muted)" style="font-size:14px;letter-spacing:.3em">/ 100</text></svg>
+<p class="mono" style="text-align:center;letter-spacing:.3em;color:{{ col }}">[ {{ h.label }} ]</p>
+<div class="eyebrow" style="margin-top:26px">How the score is made · {{ h.windows }} recent windows</div>
+{% for name,w,p,txt in h.parts %}<div class="box row"><div class="grow"><b>{{ name }}</b><div class="muted mono" style="font-size:13px">{{ txt }}</div></div>
+<div class="mono {{ 'good' if p < 0.2 else ('moderate' if p < 0.6 else 'bad') }}">{% if w %}−{{ '%.0f'|format(w*p) }}/{{ w }}{% else %}info{% endif %}</div></div>{% endfor %}
+{% endblock %}{% block script %}<script>
+document.getElementById('share').onclick=async()=>{const url=location.origin+'/doctor/report';
+if(navigator.share){try{await navigator.share({title:'XWIDS Net Doctor report',url});return}catch(e){}}location.href=url};
+</script>{% endblock %}
