@@ -1,0 +1,18 @@
+{% extends "doctor/base.html" %}{% block title %}Devices{% endblock %}{% block crumb %}DEVICES{% endblock %}{% block body %}
+<div class="eyebrow">Access log</div><h1>Access points</h1>
+<p class="sub">// {{ aps|length }} access points heard on {{ net.name }}. Clients = most distinct transmitters in one window.</p>
+<div class="box row soft"><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+<div class="grow"><b>This device</b><div class="mono muted" style="font-size:13px" id="me">reading connection…</div></div><div style="text-align:right"><div class="big" id="medl">–</div><div class="unit">MBPS</div></div></div>
+{% for a in aps %}<div class="box row"><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="14" width="18" height="6"/><path d="M7 17h.01M11 17h.01M8 10a5 5 0 0 1 8 0M5 7a9 9 0 0 1 14 0"/></svg></div>
+<div class="grow"><b>{{ a.name or ('AP ' ~ a.bssid[-5:]) }}</b>
+<div class="mono muted" style="font-size:13px">{{ a.bssid }} / {{ a.clients }} clients / {{ a.channels }} ch{% if a.channels > 1 %} <span class="bad">(cloned BSSID?)</span>{% endif %}<br>
+<span class="{{ a.band }}">{{ '%.0f'|format(a.rssi) if a.rssi is not none else '?' }} dBm</span> / retry {{ '%.0f'|format((a.retry or 0)*100) }}% / {{ a.windows }} windows
+{% for k,v in a.attacks.items() %}<br><span class="bad">⚠ {{ k }} × {{ v }}</span>{% endfor %}</div></div>
+<div style="text-align:right"><div class="big {{ 'bad' if a.attacks else '' }}">{{ '%.0f'|format(a.frames_per_s or 0) }}</div><div class="unit">FRAMES/S</div></div></div>
+{% else %}<div class="box">No traffic yet. Run the <a href="/doctor/diag?run=1">diagnostic</a>.</div>{% endfor %}
+{% endblock %}{% block script %}<script>
+const c=navigator.connection||{};const bits=[c.effectiveType&&('network '+c.effectiveType),c.rtt!=null&&('rtt '+c.rtt+' ms'),
+c.saveData&&'data saver on',navigator.onLine?'online':'offline',(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform].filter(Boolean);
+document.getElementById('me').textContent=bits.join(' / ')||'connection details not exposed by this browser';
+document.getElementById('medl').textContent=c.downlink!=null?c.downlink:'–';
+</script>{% endblock %}
