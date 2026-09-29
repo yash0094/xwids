@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0b0b"><title>{% block title %}Net Doctor{% endblock %} · XWIDS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='doctor.css') }}"><meta name="csrf" content="{{ csrf }}"></head><body>
+<div class="top"><div class="logo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.2" fill="currentColor"/></svg></div>
+<div class="brand"><b>NET DOCTOR</b><span>XWIDS / DIAGNOSTIC CONSOLE</span></div><a class="back" href="/" title="Analyst console (SOC)">SOC&nbsp;→</a></div>
+<div class="crumb">&gt; {% block crumb %}{% endblock %}<i></i></div>
+<main>{% if synthetic %}<div class="warnline">SIMULATED 802.11 TRAFFIC · numbers are real computations on synthetic data</div>{% endif %}
+{% block body %}{% endblock %}</main>
+{% set T = [("dash","/doctor/","DASH",'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/><path d="M8 17h.01M16 17h.01"/>'),
+("diag","/doctor/diag","DIAG",'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'),
+("reco","/doctor/reco","RECO",'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'),
+("zone","/doctor/zone","ZONE",'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>'),
+("devi","/doctor/devices","DEVI",'<rect x="2" y="4" width="14" height="10"/><path d="M6 18h6"/><rect x="17" y="8" width="5" height="12"/>'),
+("time","/doctor/timeline","TIME",'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/>'),
+("fore","/doctor/forecast","FORE",'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>')] %}
+<nav class="tabs">{% for k,href,label,icon in T %}<a href="{{ href }}" class="{{ 'on' if tab==k }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ icon|safe }}</svg>{{ label }}</a>{% endfor %}</nav>
+{% block script %}{% endblock %}</body></html>
