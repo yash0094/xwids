@@ -1,0 +1,25 @@
+{% extends "doctor/base.html" %}{% block title %}Zone map{% endblock %}{% block crumb %}ZONE MAP{% endblock %}{% block body %}
+<div class="eyebrow">Spatial analysis</div><h1>Zone mapping</h1>
+<p class="sub">// Signal strength heard from each access point. Name an AP after its room (e.g. Kitchen) to label the map. Positions are illustrative, not measured.</p>
+{% if not zones %}<div class="box">No traffic yet. Run the <a href="/doctor/diag?run=1">diagnostic</a> to capture some.</div>{% else %}
+<div class="box" style="padding:0"><svg viewBox="0 0 600 460" style="width:100%;display:block" role="img" aria-label="signal map">
+<defs>{% for c,n in [('var(--good)','g'),('var(--mod)','m'),('var(--bad)','b'),('var(--muted)','u')] %}<radialGradient id="{{ n }}"><stop offset="0" stop-color="{{ c }}" stop-opacity=".55"/><stop offset="1" stop-color="{{ c }}" stop-opacity="0"/></radialGradient>{% endfor %}
+<pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="var(--line)" stroke-width=".6"/></pattern></defs>
+<rect width="600" height="460" fill="url(#grid)"/>
+{% for z in zones %}{% set g = {'good':'g','moderate':'m','weak':'b'}.get(z.band,'u') %}<circle cx="{{ z.x }}" cy="{{ z.y }}" r="120" fill="url(#{{ g }})"/>{% endfor %}
+{% for z in zones %}{% set c = {'good':'var(--good)','moderate':'var(--mod)','weak':'var(--bad)'}.get(z.band,'var(--muted)') %}
+<rect x="{{ z.x-12 }}" y="{{ z.y-12 }}" width="24" height="24" fill="var(--bg)" stroke="{{ c }}" stroke-width="4"/>
+{% if z.attacks %}<text x="{{ z.x }}" y="{{ z.y+5 }}" text-anchor="middle" style="font-size:14px;font-weight:700" fill="var(--bad)">!</text>{% endif %}
+{% set lbl = (z.name or z.bssid[-5:]) ~ ' / ' ~ ('%.0f'|format(z.rssi) if z.rssi is not none else '?') %}
+<rect x="{{ z.x-(lbl|length)*4.6-8 }}" y="{{ z.y+18 }}" width="{{ (lbl|length)*9.2+16 }}" height="26" fill="var(--bg)" stroke="var(--line)"/>
+<text x="{{ z.x }}" y="{{ z.y+36 }}" text-anchor="middle" style="font-size:15px" fill="var(--ink)">{{ lbl }}</text>{% endfor %}</svg>
+<div style="padding:18px 22px;border-top:1px solid var(--line)"><div class="eyebrow">Legend</div>
+<div class="kv" style="margin-top:10px"><span><b style="display:inline-block;width:14px;height:14px;background:var(--good);vertical-align:-2px"></b>&nbsp; GOOD</span><span>≥ -65 dBm</span>
+<span><b style="display:inline-block;width:14px;height:14px;background:var(--mod);vertical-align:-2px"></b>&nbsp; MODERATE</span><span>-65 to -75</span>
+<span><b style="display:inline-block;width:14px;height:14px;background:var(--bad);vertical-align:-2px"></b>&nbsp; WEAK</span><span>&lt; -75 dBm</span>
+<span class="bad">&nbsp;!&nbsp; attack seen</span><span></span></div></div></div>
+<div class="eyebrow" style="margin-top:24px">Name access points</div>
+{% for z in zones %}<form method="post" action="/doctor/name" class="box row"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="bssid" value="{{ z.bssid }}">
+<span class="mono grow" style="font-size:13px">{{ z.bssid }} <span class="{{ z.band }}">{{ '%.0f'|format(z.rssi) if z.rssi is not none else '?' }} dBm</span></span>
+<input name="name" value="{{ z.name }}" placeholder="room name" size="12"><button class="btn" style="margin:0;padding:10px 14px">Save</button></form>{% endfor %}{% endif %}
+{% endblock %}
