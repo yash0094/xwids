@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Feedback loop{% endblock %}{% block body %}
+<h1>Human-in-the-loop feedback</h1>
+<p class="muted">Every {{ ov.retrain_every }} analyst labels retrain the RF + XGBoost + Isolation Forest on the original training data plus all verdicts so far.
+A new model goes live only if validation macro-F1 does not drop. Live model: <b>v{{ reg.live }}</b>.</p>
+<form method="post" action="/retrain" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+<button class="btn" {% if ov.busy %}disabled{% endif %}>{% if ov.busy %}Retraining…{% else %}Retrain now with {{ ov.stats.pending }} new label(s){% endif %}</button></form>
+<div class="two" style="margin-top:14px">
+<div class="card"><h2 style="margin-top:0">Validation macro-F1</h2>{{ charts.f1_macro|safe }}</div>
+<div class="card"><h2 style="margin-top:0">False positive rate</h2>{{ charts.fpr|safe }}</div>
+<div class="card"><h2 style="margin-top:0">Escalation rate</h2>{{ charts.escalation_rate|safe }}</div></div>
+<h2>Retraining runs</h2>
+<div class="tablewrap"><table><tr><th>version</th><th>time</th><th class="num">labels</th><th class="num">seconds</th><th class="num">F1 before → after</th><th class="num">FPR before → after</th><th class="num">escalation</th><th>result</th></tr>
+{% for h in hist|reverse %}{% set b=h.metrics.val_before %}{% set a=h.metrics.val_after %}
+<tr><td>v{{ h.version }}</td><td>{{ h.ts }}</td><td class="num">{{ h.labels_total }} (+{{ h.labels_new }})</td><td class="num">{{ "%.0f"|format(h.seconds) }}</td>
+<td class="num">{{ "%.2f"|format(b.f1_macro*100) }} → {{ "%.2f"|format(a.f1_macro*100) }}</td>
+<td class="num">{{ "%.2f"|format(b.fpr*100) }}% → {{ "%.2f"|format(a.fpr*100) }}%</td>
+<td class="num">{{ "%.0f"|format(b.escalation_rate*100) }}% → {{ "%.0f"|format(a.escalation_rate*100) }}%</td><td>{{ h.note }}</td></tr>
+{% else %}<tr><td colspan="8" class="muted">No retraining yet: review {{ ov.retrain_every }} alerts to trigger the first one.</td></tr>{% endfor %}</table></div>
+<p class="muted">Offline version of this experiment (paper Table 5): <code>python scripts/04_active_learning.py</code>. Runs are also logged to <code>reports/&lt;dataset&gt;/feedback_log.jsonl</code> and to MLflow when installed.</p>
+{% endblock %}
