@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% block title %}Overview{% endblock %}{% block body %}
+<h1>Overview</h1>
+<p class="muted">Dataset <b>{{ ov.dataset }}</b> · live model <b>v{{ ov.model.version }}</b> ({{ ov.model.rf_trees }}-tree RF + {{ ov.model.secondary }}) · τ = {{ ov.tau }}
+ · retrain every {{ ov.retrain_every }} labels</p>
+{% if ov.synthetic %}<div class="warnbox"><b>Synthetic traffic.</b> This deployment replays simulated 802.11 windows. Numbers here show the system working; they are not results for the paper.</div>{% endif %}
+<div class="grid">
+<div class="card kpi"><div class="v">{{ ov.stats.n }}</div><div class="l">windows scored</div></div>
+<div class="card kpi"><div class="v">{{ ov.stats.alerts }}</div><div class="l">alerts (attack predicted or escalated)</div></div>
+<div class="card kpi"><div class="v">{{ "%.0f"|format(ov.stats.escalation_rate*100) }}%</div><div class="l">escalation rate (escalated / alerts)</div></div>
+<div class="card kpi"><div class="v"><a href="/queue">{{ ov.stats.queue }}</a></div><div class="l">waiting in analyst queue</div></div>
+<div class="card kpi"><div class="v">{{ ov.stats.auto_attacks }}</div><div class="l">attacks auto-resolved (SHAP archived)</div></div>
+<div class="card kpi"><div class="v">{{ ov.stats.labelled }}</div><div class="l">analyst verdicts ({{ ov.stats.fp }} false positives)</div>
+<div class="meter" title="labels until next retrain"><span style="width:{{ [100, (100*ov.stats.pending/ov.retrain_every)|round|int]|min }}%"></span></div>
+<div class="l">{{ ov.stats.pending }}/{{ ov.retrain_every }} new labels until retraining{% if ov.busy %} · <b>retraining…</b>{% endif %}</div></div>
+</div>
+{% if ov.last_error %}<div class="warnbox">Last retraining failed: {{ ov.last_error }}</div>{% endif %}
+<h2>Simulate live traffic</h2>
+<div class="card"><form method="post" action="/replay" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+Replay the next <select name="n"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
+held-out traffic windows through the detector <button class="btn primary">Replay</button></form>
+<p class="muted" style="margin:8px 0 0">Stream position {{ ov.stream.cursor }} / {{ ov.stream.size }} windows. Live sensors can post to <code>POST /api/score</code> instead.</p></div>
+<h2>Latest alerts</h2>
+<div class="tablewrap"><table><tr><th>#</th><th>time</th><th>BSSID</th><th>prediction</th><th class="num">confidence</th><th>route</th><th class="num">ABEC J</th><th>verdict</th></tr>
+{% for r in recent %}<tr><td><a href="/alert/{{ r.id }}">{{ r.id }}</a></td><td>{{ r.ts }}</td><td class="mono">{{ r.bssid }}</td>
+<td>{{ r.pred }}{% if r.anomaly %} <span class="chip" title="Isolation Forest anomaly">anomaly</span>{% endif %}</td>
+<td class="num">{{ "%.2f"|format(r.confidence) }}</td><td class="r-{{ r.route }}">{{ r.route }}</td>
+<td class="num">{{ "%.2f"|format(r.jaccard) if r.jaccard is not none else "–" }}</td><td>{{ r.verdict or "" }}</td></tr>
+{% else %}<tr><td colspan="8" class="muted">No alerts yet. Press <b>Replay</b> above.</td></tr>{% endfor %}</table></div>
+<h2>Engine</h2><div class="card"><table>{% for k,v in ov.backends.items() %}<tr><td>{{ k }}</td><td>{{ v }}</td></tr>{% endfor %}
+<tr><td>features ({{ ov.model.features|length }})</td><td>{{ ov.model.features|join(", ") }}</td></tr></table></div>
+{% if ov.stats.analyst_checked %}<p class="muted">Replay-only check: analyst verdicts matched the hidden ground truth on {{ ov.stats.analyst_agree }} of {{ ov.stats.analyst_checked }} reviewed windows.</p>{% endif %}
+{% endblock %}
