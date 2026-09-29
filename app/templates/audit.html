@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Audit log{% endblock %}{% block body %}
+<h1>Audit log</h1>
+<p>{% if ok %}<span class="chip t-High">hash chain intact · {{ n }} entries</span>{% else %}<span class="chip t-Disputed">hash chain BROKEN at entry {{ n }}: log was edited</span>{% endif %}
+<a class="btn" href="/audit.csv">Download audit CSV</a> <a class="btn" href="/verdicts.csv">Download verdicts CSV</a></p>
+<p class="muted">Each entry stores the SHA-256 of the previous one, so any later edit breaks the chain (supports GDPR Art. 22 / ISO 27001 documentation of automated decisions).</p>
+<div class="tablewrap"><table><tr><th>#</th><th>time</th><th>who</th><th>action</th><th>detail</th><th>hash</th></tr>
+{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.ts }}</td><td>{{ r.actor }}</td><td>{{ r.action }}</td><td class="mono">{{ r.detail }}</td><td class="mono">{{ r.hash[:16] }}…</td></tr>{% endfor %}</table></div>
+{% endblock %}
