@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: xwids
+    runtime: docker
+    plan: starter            # the free 512 MB plan is too small for the 500-tree forest; see docs/DEPLOY.md
+    healthCheckPath: /healthz
+    envVars:
+      - key: XWIDS_DATASET
+        value: synthetic
+      - key: XWIDS_USERS
+        sync: false
+      - key: XWIDS_SECRET_KEY
+        generateValue: true
