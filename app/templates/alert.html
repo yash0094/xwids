@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% block title %}Alert {{ e.id }}{% endblock %}{% block body %}
+{% set ab = ex.abec %}
+<p><a href="/queue">← queue</a></p>
+<h1>Alert #{{ e.id }}: {{ e.pred }} <span class="muted" style="font-weight:400">at {{ "%.0f"|format(e.confidence*100) }}% confidence</span></h1>
+<p class="muted">BSSID <span class="mono">{{ e.bssid }}</span> · window starting {{ e.win_start }} s · route <b class="r-{{ e.route }}">{{ e.route }}</b> · {{ e.reason }} · model v{{ e.model_version }}</p>
+{% if e.anomaly %}<div class="warnbox">The Isolation Forest (trained on Normal traffic only) marks this window as <b>unusual</b> (score {{ "%.3f"|format(e.anomaly_score) }}). If none of the known attack classes fit, it may be a new (zero-day) attack.</div>{% endif %}
+<div class="grid" style="margin-top:12px">
+<div class="card"><div class="l muted">ABEC agreement (Jaccard of top-{{ ab.k }})</div><div class="jbig">{{ "%.2f"|format(ab.jaccard) }}</div>
+<div class="muted">{% if ab.jaccard >= 0.67 %}SHAP and LIME mostly agree on why.{% elif ab.jaccard >= 0.34 %}Partial agreement: check the disputed features.{% else %}Explanations disagree: treat as a boundary case and inspect carefully.{% endif %}</div></div>
+<div class="card"><div class="l muted">Feature tiers</div><p><span class="chip t-High">{{ ab.n_high }} high confidence</span>
+<span class="chip t-Single">{{ ab.n_single }} single-source</span> <span class="chip t-Disputed">{{ ab.n_disputed }} disputed</span></p>
+<div class="muted">SHAP {{ ex.shap_ms }} ms · LIME {{ ex.lime_ms }} ms</div></div>
+<div class="card"><div class="l muted">Class probabilities (RF + XGBoost soft vote)</div>
+{% for c,p in probs[:4] %}<div style="display:flex;justify-content:space-between"><span>{{ c }}</span><span>{{ "%.1f"|format(p*100) }}%</span></div>
+<div class="meter"><span style="width:{{ (p*100)|round|int }}%"></span></div>{% endfor %}</div></div>
+
+<h2>ABEC evidence for “{{ ex.class }}”</h2>
+<div class="tablewrap"><table><tr><th>feature</th><th>tier</th><th>source</th><th class="num">reported score</th><th class="num">SHAP (norm.)</th><th class="num">LIME (norm.)</th><th class="num">value</th><th>meaning</th></tr>
+{% for t in ab.tiers %}<tr><td><b>{{ t.feature }}</b></td><td><span class="chip t-{{ t.tier.split()[0].split('-')[0] }}">{{ t.tier }}</span></td><td>{{ t.source }}</td>
+<td class="num">{{ "%+.3f"|format(t.score) }}</td><td class="num">{{ "%+.3f"|format(t.shap_norm) }}</td><td class="num">{{ "%+.3f"|format(t.lime_norm) }}</td>
+<td class="num">{{ "%.4g"|format(ex["values"][t.index]) }}</td><td class="muted">{{ desc.get(t.feature, "") }}</td></tr>{% endfor %}</table></div>
+<p class="muted">Positive score = pushes towards “{{ ex.class }}”. <b>High confidence</b>: both methods rank it top-{{ ab.k }} with the same sign (score = mean of normalised SHAP and LIME). <b>Single-source</b>: only one method ranks it top-{{ ab.k }}. <b>Disputed</b>: one method ranks it high but the other finds it negligible or pushing the other way.</p>
+
+<div class="two"><div class="card"><h2 style="margin-top:0">SHAP waterfall</h2><p class="muted" style="margin-top:0">{{ ex.backend.shap }}</p>{{ shap_svg|safe }}</div>
+<div class="card"><h2 style="margin-top:0">LIME local surrogate</h2><p class="muted" style="margin-top:0">{{ ex.backend.lime }}; red pushes towards {{ ex.class }}, blue away</p>{{ lime_svg|safe }}</div></div>
+
+<h2>Your verdict</h2>
+<div class="card">{% if e.verdict %}<p>Verdict already recorded: <b>{{ e.verdict }}</b> ({{ e.verdict_kind }}) by {{ e.analyst }} at {{ e.verdict_ts }}.</p>{% endif %}
+<form method="post" action="/alert/{{ e.id }}/verdict"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="go_next" value="1">
+<p class="inline">{% if e.pred != NORMAL %}<button class="btn ok" name="label" value="{{ e.pred }}">True positive: {{ e.pred }}</button>
+<button class="btn danger" name="label" value="{{ NORMAL }}">False positive: Normal</button>{% else %}
+<button class="btn ok" name="label" value="{{ NORMAL }}">Confirm Normal</button>{% endif %}</p>
+<p class="inline">or the real class is <select name="label_other">{% for c in classes %}<option {% if c==e.pred %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+<button class="btn" name="label" value="__other__">Save this class</button></p>
+<p><textarea name="note" rows="2" cols="70" placeholder="note for the audit log (optional)"></textarea></p></form>
+{% if nxt %}<p><a href="/alert/{{ nxt.id }}">Skip to next alert →</a></p>{% endif %}</div>
+
+<h2>Raw feature values</h2>
+<div class="tablewrap"><table><tr>{% for f in ex.features %}<th>{{ f }}</th>{% endfor %}</tr><tr>{% for v in ex["values"] %}<td class="num">{{ "%.4g"|format(v) }}</td>{% endfor %}</tr></table></div>
+{% endblock %}
