@@ -1,0 +1,12 @@
+{% extends "doctor/base.html" %}{% block title %}Recommendations{% endblock %}{% block crumb %}RECOMMEND{% endblock %}{% block body %}
+<div class="eyebrow good">✦ <span class="muted">IDS evidence / rule-based</span></div><h1>Smart recommendations</h1>
+<p class="sub">// Targeted fixes derived from the detected attacks and radio telemetry. XWIDS cannot change router settings itself: follow the steps, then mark the fix done.</p>
+{% for r in recs %}<div class="box"><div class="row" style="align-items:flex-start"><span class="mono muted" style="width:34px">{{ '%02d'|format(loop.index) }}</span>
+<div class="grow"><span class="tag {{ r.impact }}">{{ r.impact }} IMPACT</span>
+<h2 style="font-family:var(--head);font-size:26px;letter-spacing:-.5px;margin:14px 0 8px">{{ r.title }}</h2>
+<p class="muted" style="margin:0 0 10px">{{ r.why }}</p><ol class="mono" style="font-size:14px;padding-left:20px">{% for s in r.how %}<li>{{ s }}</li>{% endfor %}</ol>
+<p class="mono muted" style="font-size:13px">EVIDENCE: {{ r.evidence }}</p>
+{% if r.key != 'none' %}{% if r.key in done %}<span class="tag good">✓ MARKED DONE</span>{% else %}
+<form method="post" action="/doctor/fix/{{ r.key }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="title" value="{{ r.title }}">
+<button class="btn solid">⚡ Mark fix done →</button></form>{% endif %}{% endif %}</div></div></div>{% endfor %}
+{% endblock %}
