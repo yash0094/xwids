@@ -1,0 +1,12 @@
+{% extends "doctor/base.html" %}{% block title %}Report{% endblock %}{% block crumb %}REPORT{% endblock %}{% block body %}
+<div class="eyebrow">Net Doctor report · {{ now }}</div><h1>{{ net.name }}</h1><p class="sub">{{ net.sub }}</p>
+<div class="box"><div class="eyebrow">Health</div><div class="big">{{ h.score }}/100 [ {{ h.label }} ]</div>
+{% for name,w,p,txt in h.parts %}<div class="mono" style="font-size:13px">{{ name }}: {{ txt }}</div>{% endfor %}</div>
+{% if cm %}<div class="box"><div class="eyebrow">Your last diagnostic</div><div class="kv">{% for k,v in cm.items() %}<span>{{ k }}</span><span>{{ '%.2f'|format(v) }}</span>{% endfor %}</div></div>{% endif %}
+<div class="box"><div class="eyebrow">Findings in {{ chk.windows }} windows</div><div class="kv">
+<span>Deauthentication</span><span class="{{ chk.deauth.status }}">{{ chk.deauth.count }}</span><span>Evil Twin</span><span class="{{ chk.evil_twin.status }}">{{ chk.evil_twin.count }}</span>
+<span>KRACK</span><span class="{{ chk.krack.status }}">{{ chk.krack.count }}</span><span>(Re)Association Flood</span><span class="{{ chk.flood.status }}">{{ chk.flood.count }}</span></div></div>
+<div class="box"><div class="eyebrow">Recommendations</div>{% for r in recs %}<p><span class="tag {{ r.impact }}">{{ r.impact }}</span> <b>{{ r.title }}</b><br><span class="muted mono" style="font-size:13px">{{ r.evidence }}</span></p>{% endfor %}</div>
+{% if f.ready %}<div class="box"><div class="eyebrow">Forecast</div><b>{{ f.headline }}</b></div>{% endif %}
+<p><button class="btn solid" onclick="print()">Print / save as PDF</button></p>
+{% endblock %}
