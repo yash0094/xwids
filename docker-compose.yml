@@ -1,0 +1,14 @@
+services:
+  xwids:
+    build: .
+    ports: ["7860:7860"]
+    environment:
+      XWIDS_DATASET: synthetic                       # or awid3 (export it with scripts/05_export_deploy.py)
+      XWIDS_USERS: "analyst:CHANGE-ME,reviewer:CHANGE-ME-TOO"
+      XWIDS_SECRET_KEY: "CHANGE-ME-to-a-long-random-string"
+      # XWIDS_API_KEY: "for sensors posting to /api/score"
+    volumes:
+      - xwids-runtime:/app/runtime                   # keeps verdicts + audit log across restarts
+    restart: unless-stopped
+volumes:
+  xwids-runtime:
