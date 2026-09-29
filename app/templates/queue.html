@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Analyst queue{% endblock %}{% block body %}
+<h1>Analyst queue</h1>
+<p class="muted">Alerts below τ = {{ ov.tau }} confidence, or anomalies the classifier called Normal. Low ABEC agreement (J &lt; {{ low }}) means SHAP and LIME disagree about <i>why</i>, so those go to the top.</p>
+<p>Sort: {% for k,l in [("priority","priority"),("jaccard","lowest agreement J"),("confidence","lowest confidence"),("newest","newest")] %}
+<a class="chip" href="?order={{ k }}" {% if order==k %}style="outline:1px solid var(--accent)"{% endif %}>{{ l }}</a> {% endfor %}</p>
+<div class="tablewrap"><table><tr><th>#</th><th>time</th><th>BSSID</th><th>prediction</th><th class="num">confidence</th><th class="num">ABEC J</th><th>why escalated</th><th></th></tr>
+{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.ts }}</td><td class="mono">{{ r.bssid }}</td><td>{{ r.pred }}</td>
+<td class="num">{{ "%.2f"|format(r.confidence) }}</td>
+<td class="num">{% if r.jaccard is not none %}<span class="chip {{ 't-Disputed' if r.jaccard < low else ('t-High' if r.jaccard >= 0.67 else 't-Single') }}">{{ "%.2f"|format(r.jaccard) }}</span>{% else %}–{% endif %}</td>
+<td class="muted">{{ r.reason }}</td><td><a class="btn" href="/alert/{{ r.id }}">Review</a></td></tr>
+{% else %}<tr><td colspan="8" class="muted">Queue is empty. Replay traffic from the <a href="/">overview</a>.</td></tr>{% endfor %}</table></div>
+{% endblock %}
