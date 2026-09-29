@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Log in{% endblock %}{% block body %}
+<div class="card" style="max-width:380px;margin:60px auto">
+<h1>XWIDS analyst login</h1><p class="muted">Explainability-Based Wireless Intrusion Detection System</p>
+<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}">
+<p><input name="username" placeholder="username" autocomplete="username" required style="width:100%"></p>
+<p><input name="password" type="password" placeholder="password" autocomplete="current-password" required style="width:100%"></p>
+<button class="btn primary" style="width:100%">Log in</button></form>
+{% if demo %}<p class="warnbox">Demo logins active (<b>analyst / xwids-demo</b>). Set <code>XWIDS_USERS</code> before sharing this URL.</p>{% endif %}
+</div>{% endblock %}
